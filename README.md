@@ -1,2 +1,2 @@
-# response
-Encapsulated HTTP responses
+# morehttp
+Helpers for HTTP servers.
