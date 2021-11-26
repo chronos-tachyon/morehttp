@@ -9,8 +9,8 @@ var closedSingleton Body = (*closedBody)(nil)
 
 type closedBody struct{}
 
-func (body *closedBody) Copy() (Body, error) {
-	return closedSingleton, nil
+func (body *closedBody) Length() int64 {
+	return 0
 }
 
 func (body *closedBody) Read(p []byte) (int, error) {
@@ -31,6 +31,10 @@ func (body *closedBody) ReadAt(p []byte, offset int64) (int, error) {
 
 func (body *closedBody) WriteTo(w io.Writer) (int64, error) {
 	return 0, fs.ErrClosed
+}
+
+func (body *closedBody) Copy() (Body, error) {
+	return closedSingleton, nil
 }
 
 func (body *closedBody) Unwrap() io.Reader {

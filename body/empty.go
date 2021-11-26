@@ -11,17 +11,16 @@ type emptyBody struct {
 	closed uint32
 }
 
-func (body *emptyBody) Copy() (Body, error) {
-	if atomic.LoadUint32(&body.closed) != 0 {
-		return closedSingleton, nil
-	}
+func (body *emptyBody) isClosed() bool {
+	return atomic.LoadUint32(&body.closed) != 0
+}
 
-	dupe := &emptyBody{}
-	return dupe, nil
+func (body *emptyBody) Length() int64 {
+	return 0
 }
 
 func (body *emptyBody) Read(p []byte) (int, error) {
-	if atomic.LoadUint32(&body.closed) != 0 {
+	if body.isClosed() {
 		return 0, fs.ErrClosed
 	}
 
@@ -33,15 +32,15 @@ func (body *emptyBody) Read(p []byte) (int, error) {
 }
 
 func (body *emptyBody) Close() error {
-	if atomic.AddUint32(&body.closed, 1) != 0 {
+	closed := atomic.AddUint32(&body.closed, 1)
+	if closed > 1 {
 		return fs.ErrClosed
 	}
-
 	return nil
 }
 
 func (body *emptyBody) Seek(offset int64, whence int) (int64, error) {
-	if atomic.LoadUint32(&body.closed) != 0 {
+	if body.isClosed() {
 		return 0, fs.ErrClosed
 	}
 
@@ -69,7 +68,7 @@ func (body *emptyBody) Seek(offset int64, whence int) (int64, error) {
 }
 
 func (body *emptyBody) ReadAt(p []byte, offset int64) (int, error) {
-	if atomic.LoadUint32(&body.closed) != 0 {
+	if body.isClosed() {
 		return 0, fs.ErrClosed
 	}
 
@@ -81,11 +80,20 @@ func (body *emptyBody) ReadAt(p []byte, offset int64) (int, error) {
 }
 
 func (body *emptyBody) WriteTo(w io.Writer) (int64, error) {
-	if atomic.LoadUint32(&body.closed) != 0 {
+	if body.isClosed() {
 		return 0, fs.ErrClosed
 	}
 
 	return 0, io.EOF
+}
+
+func (body *emptyBody) Copy() (Body, error) {
+	if body.isClosed() {
+		return closedSingleton, nil
+	}
+
+	dupe := &emptyBody{}
+	return dupe, nil
 }
 
 func (body *emptyBody) Unwrap() io.Reader {

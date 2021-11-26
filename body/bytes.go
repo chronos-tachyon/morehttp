@@ -16,20 +16,15 @@ type bytesBody struct {
 	closed bool
 }
 
-func (body *bytesBody) Copy() (Body, error) {
+func (body *bytesBody) Length() int64 {
 	body.mu.Lock()
 	defer body.mu.Unlock()
 
 	if body.closed {
-		return closedSingleton, nil
+		return 0
 	}
 
-	dupe := &bytesBody{
-		data:   body.data,
-		offset: body.offset,
-		closed: body.closed,
-	}
-	return dupe, nil
+	return int64(len(body.data) - body.offset)
 }
 
 func (body *bytesBody) Read(p []byte) (int, error) {
@@ -40,10 +35,9 @@ func (body *bytesBody) Read(p []byte) (int, error) {
 		return 0, fs.ErrClosed
 	}
 
-	avail := len(body.data) - body.offset
-
 	var err error
 	n := len(p)
+	avail := len(body.data) - body.offset
 	if n > avail {
 		n = avail
 		err = io.EOF
@@ -126,10 +120,9 @@ func (body *bytesBody) ReadAt(p []byte, offset int64) (int, error) {
 		offset = bodyLen
 	}
 
-	avail := bodyLen - offset
-
 	var err error
 	n := len(p)
+	avail := bodyLen - offset
 	if int64(n) > avail {
 		n = int(avail)
 		err = io.EOF
@@ -157,6 +150,22 @@ func (body *bytesBody) WriteTo(w io.Writer) (int64, error) {
 	assert.Assertf(n <= avail, "Write must return %d <= %d", n, avail)
 	body.offset += int(n)
 	return int64(n), err
+}
+
+func (body *bytesBody) Copy() (Body, error) {
+	body.mu.Lock()
+	defer body.mu.Unlock()
+
+	if body.closed {
+		return closedSingleton, nil
+	}
+
+	dupe := &bytesBody{
+		data:   body.data,
+		offset: body.offset,
+		closed: body.closed,
+	}
+	return dupe, nil
 }
 
 func (body *bytesBody) Unwrap() io.Reader {

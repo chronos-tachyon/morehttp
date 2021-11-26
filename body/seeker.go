@@ -55,21 +55,15 @@ type seekerBody struct {
 	closed bool
 }
 
-func (body *seekerBody) Copy() (Body, error) {
+func (body *seekerBody) Length() int64 {
 	body.mu.Lock()
 	defer body.mu.Unlock()
 
 	if body.closed {
-		return closedSingleton, nil
+		return 0
 	}
 
-	dupe := &seekerBody{
-		common: body.common,
-		offset: body.offset,
-		closed: body.closed,
-	}
-	dupe.common.ref()
-	return dupe, nil
+	return (body.common.length - body.offset)
 }
 
 func (body *seekerBody) Read(p []byte) (int, error) {
@@ -80,11 +74,11 @@ func (body *seekerBody) Read(p []byte) (int, error) {
 		return 0, fs.ErrClosed
 	}
 
-	avail := body.common.length - body.offset
-	x := len(p)
+	x := int64(len(p))
 	eof := false
-	if int64(x) > avail {
-		x = int(avail)
+	avail := body.common.length - body.offset
+	if x > avail {
+		x = avail
 		eof = true
 	}
 
@@ -167,11 +161,11 @@ func (body *seekerBody) ReadAt(p []byte, offset int64) (int, error) {
 		offset = bodyLen
 	}
 
-	avail := bodyLen - offset
-	x := len(p)
+	x := int64(len(p))
 	eof := false
-	if int64(x) > avail {
-		x = int(avail)
+	avail := bodyLen - offset
+	if x > avail {
+		x = avail
 		eof = true
 	}
 
@@ -180,6 +174,23 @@ func (body *seekerBody) ReadAt(p []byte, offset int64) (int, error) {
 		err = io.EOF
 	}
 	return n, err
+}
+
+func (body *seekerBody) Copy() (Body, error) {
+	body.mu.Lock()
+	defer body.mu.Unlock()
+
+	if body.closed {
+		return closedSingleton, nil
+	}
+
+	dupe := &seekerBody{
+		common: body.common,
+		offset: body.offset,
+		closed: body.closed,
+	}
+	dupe.common.ref()
+	return dupe, nil
 }
 
 func (body *seekerBody) Unwrap() io.Reader {
