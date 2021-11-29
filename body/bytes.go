@@ -13,6 +13,7 @@ type bytesBody struct {
 	mu     sync.Mutex
 	data   []byte
 	offset int
+	eof    bool
 	closed bool
 }
 
@@ -35,11 +36,17 @@ func (body *bytesBody) Read(p []byte) (int, error) {
 		return 0, fs.ErrClosed
 	}
 
-	var err error
+	if body.eof {
+		return 0, io.EOF
+	}
+
 	n := len(p)
 	avail := len(body.data) - body.offset
+	eof := false
+	var err error
 	if n > avail {
 		n = avail
+		eof = true
 		err = io.EOF
 	}
 
@@ -47,6 +54,7 @@ func (body *bytesBody) Read(p []byte) (int, error) {
 	j := i + n
 	copy(p[0:n], body.data[i:j])
 	body.offset = j
+	body.eof = eof
 	return n, err
 }
 
@@ -60,6 +68,7 @@ func (body *bytesBody) Close() error {
 
 	body.data = nil
 	body.offset = 0
+	body.eof = true
 	body.closed = true
 	return nil
 }
@@ -99,6 +108,7 @@ func (body *bytesBody) Seek(offset int64, whence int) (int64, error) {
 	}
 
 	body.offset = int(offset)
+	body.eof = false
 	return offset, nil
 }
 
@@ -142,6 +152,10 @@ func (body *bytesBody) WriteTo(w io.Writer) (int64, error) {
 		return 0, fs.ErrClosed
 	}
 
+	if body.eof {
+		return 0, nil
+	}
+
 	i := body.offset
 	j := len(body.data)
 	avail := (j - i)
@@ -149,6 +163,7 @@ func (body *bytesBody) WriteTo(w io.Writer) (int64, error) {
 	assert.Assertf(n >= 0, "Write must return %d >= 0", n)
 	assert.Assertf(n <= avail, "Write must return %d <= %d", n, avail)
 	body.offset += int(n)
+	body.eof = true
 	return int64(n), err
 }
 
@@ -163,6 +178,7 @@ func (body *bytesBody) Copy() (Body, error) {
 	dupe := &bytesBody{
 		data:   body.data,
 		offset: body.offset,
+		eof:    body.eof,
 		closed: body.closed,
 	}
 	return dupe, nil

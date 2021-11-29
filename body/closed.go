@@ -22,7 +22,7 @@ func (body *closedBody) Close() error {
 }
 
 func (body *closedBody) Seek(offset int64, whence int) (int64, error) {
-	return 0, fs.ErrClosed
+	return -1, fs.ErrClosed
 }
 
 func (body *closedBody) ReadAt(p []byte, offset int64) (int, error) {
