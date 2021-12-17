@@ -44,7 +44,7 @@ func TestSeekerBody_WithStat(t *testing.T) {
 		mockreader.ExpectMark("ShortBody-End"),
 	)
 
-	b, err := FromReader(mockreader.Wrapper110{r})
+	b, err := FromReader(mockreader.Wrapper110{Inner: r})
 	if err != nil {
 		t.Errorf("FromReader failed: %v", err)
 		return
@@ -93,7 +93,7 @@ func TestSeekerBody_NoStat(t *testing.T) {
 		mockreader.ExpectMark("ShortBody-End"),
 	)
 
-	b, err := FromReader(mockreader.Wrapper010{r})
+	b, err := FromReader(mockreader.Wrapper010{Inner: r})
 	if err != nil {
 		t.Errorf("FromReader failed: %v", err)
 		return

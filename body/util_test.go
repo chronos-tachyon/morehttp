@@ -79,7 +79,7 @@ func runEmptyBodyReadTests(t *testing.T, o *TestOptions) {
 		err error
 	)
 	p0 := []byte(nil)
-	p1 := make([]byte, 1, 1)
+	p1 := make([]byte, 1)
 
 	o.EmptyMock.Mark("Read-Begin")
 
@@ -297,7 +297,7 @@ func runEmptyBodyReadAtTests(t *testing.T, o *TestOptions) {
 		err error
 	)
 	p0 := []byte(nil)
-	p1 := make([]byte, 1, 1)
+	p1 := make([]byte, 1)
 
 	o.EmptyMock.Mark("ReadAt-Begin")
 
@@ -337,7 +337,7 @@ func runShortBodyReadTests(t *testing.T, o *TestOptions) {
 		err error
 	)
 	p0 := []byte(nil)
-	p1 := make([]byte, 1, 1)
+	p1 := make([]byte, 1)
 
 	o.ShortMock.Mark("Read-Begin")
 
@@ -496,8 +496,8 @@ func runShortBodySeekTests(t *testing.T, o *TestOptions) {
 		n64 int64
 		err error
 	)
-	p1 := make([]byte, 1, 1)
-	p4 := make([]byte, 4, 4)
+	p1 := make([]byte, 1)
+	p4 := make([]byte, 4)
 
 	o.ShortMock.Mark("Seek-Begin")
 
@@ -640,8 +640,8 @@ func runShortBodyReadAtTests(t *testing.T, o *TestOptions) {
 		err error
 	)
 	p0 := []byte(nil)
-	p1 := make([]byte, 1, 1)
-	p4 := make([]byte, 4, 4)
+	p1 := make([]byte, 1)
+	p4 := make([]byte, 4)
 
 	o.ShortMock.Mark("ReadAt-Begin")
 
