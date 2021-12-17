@@ -1,14 +1,14 @@
 name: golangci-lint
+
 on:
   push:
-    tags:
-      - 'v*'
-    branches:
-      - 'main'
-  pull_request:
-      - 'main'
+    tags: [ 'v*' ]
+    branches: [ 'main' ]
+  pull_request: [ 'main' ]
+
 permissions:
   contents: read
+
 jobs:
   golangci:
     name: lint
