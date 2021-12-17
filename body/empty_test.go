@@ -5,7 +5,7 @@ import (
 )
 
 func TestEmptyBody(t *testing.T) {
-	b := &emptyBody{}
+	b := Empty()
 
 	RunBodyTests(t, &TestOptions{
 		EmptyBody: b,

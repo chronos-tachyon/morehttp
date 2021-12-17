@@ -5,9 +5,11 @@ import (
 )
 
 func TestBytesBody(t *testing.T) {
-	b := &bytesBody{data: []byte{'a', 'b', 'c', 'd'}}
+	b0 := FromBytes(nil)
+	b1 := FromBytes([]byte{'a', 'b', 'c', 'd'})
 
 	RunBodyTests(t, &TestOptions{
-		ShortBody: b,
+		EmptyBody: b0,
+		ShortBody: b1,
 	})
 }

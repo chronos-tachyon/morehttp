@@ -5,7 +5,7 @@ import (
 )
 
 func TestClosedBody(t *testing.T) {
-	b := &closedBody{}
+	b := AlreadyClosed()
 
 	RunBodyTests(t, &TestOptions{
 		ClosedBody: b,
