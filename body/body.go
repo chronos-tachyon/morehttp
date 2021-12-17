@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"math"
 
 	"github.com/chronos-tachyon/assert"
 )
@@ -167,6 +166,10 @@ func FromString(data string) Body {
 func FromReader(r io.Reader) (Body, error) {
 	assert.NotNil(&r)
 
+	if b, bOK := r.(Body); bOK {
+		return b, nil
+	}
+
 	f, fOK := r.(fs.File)
 	s, sOK := r.(io.ReadSeeker)
 	at, atOK := r.(io.ReaderAt)
@@ -197,10 +200,7 @@ func FromReader(r io.Reader) (Body, error) {
 		}
 	}
 
-	if atOK {
-		if length < 0 {
-			length = math.MaxInt64
-		}
+	if atOK && length >= 0 {
 		common := &readerAtCommon{
 			r:      r,
 			at:     at,
@@ -211,10 +211,7 @@ func FromReader(r io.Reader) (Body, error) {
 		return body, nil
 	}
 
-	if sOK {
-		if length < 0 {
-			length = math.MaxInt64
-		}
+	if sOK && length >= 0 {
 		common := &seekerCommon{
 			s:      s,
 			length: length,

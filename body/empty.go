@@ -1,7 +1,6 @@
 package body
 
 import (
-	"fmt"
 	"io"
 	"io/fs"
 	"sync"
@@ -56,21 +55,18 @@ func (body *emptyBody) Seek(offset int64, whence int) (int64, error) {
 	switch whence {
 	case io.SeekStart:
 		if offset < 0 {
-			return -1, fmt.Errorf("Seek error: whence is SeekStart but offset %d is negative", offset)
+			return -1, NegativeStartOffsetSeekError{offset}
 		}
-
 	case io.SeekCurrent:
 		// pass
-
 	case io.SeekEnd:
 		// pass
-
 	default:
-		return -1, fmt.Errorf("Seek error: unknown whence value %d", whence)
+		return -1, UnknownWhenceSeekError{whence}
 	}
 
 	if offset < 0 {
-		return -1, fmt.Errorf("Seek error: computed offset %d is negative", offset)
+		return -1, NegativeComputedOffsetSeekError{offset}
 	}
 
 	body.eof = false

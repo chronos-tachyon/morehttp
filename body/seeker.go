@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/fs"
 	"sync"
-	"sync/atomic"
 
 	"github.com/chronos-tachyon/assert"
 )
@@ -18,24 +17,42 @@ type seekerCommon struct {
 }
 
 func (common *seekerCommon) ref() {
-	atomic.AddInt32(&common.refcnt, 1)
-}
-
-func (common *seekerCommon) unref() error {
-	refcnt := atomic.AddInt32(&common.refcnt, -1)
-	if refcnt > 0 {
-		return nil
-	}
-	if c, ok := common.s.(io.Closer); ok {
-		return c.Close()
-	}
-	return nil
-}
-
-func (common *seekerCommon) readAt(p []byte, offset int64) (int, error) {
 	common.mu.Lock()
 	defer common.mu.Unlock()
 
+	common.refcnt++
+}
+
+func (common *seekerCommon) unref() error {
+	common.mu.Lock()
+	defer common.mu.Unlock()
+
+	common.refcnt--
+
+	if common.refcnt > 0 {
+		return nil
+	}
+
+	var err error
+	if c, cOK := common.s.(io.Closer); cOK {
+		err = c.Close()
+	}
+
+	common.s = nil
+	common.length = 0
+	common.refcnt = 0
+
+	return err
+}
+
+func (common *seekerCommon) Length() int64 {
+	common.mu.Lock()
+	defer common.mu.Unlock()
+
+	return common.length
+}
+
+func (common *seekerCommon) readAt(p []byte, offset int64) (int, error) {
 	_, err := common.s.Seek(offset, io.SeekStart)
 	if err != nil {
 		return 0, err
@@ -51,6 +68,7 @@ func (common *seekerCommon) readAt(p []byte, offset int64) (int, error) {
 type seekerBody struct {
 	mu     sync.Mutex
 	common *seekerCommon
+	err    error
 	offset int64
 	closed bool
 }
@@ -74,19 +92,51 @@ func (body *seekerBody) Read(p []byte) (int, error) {
 		return 0, fs.ErrClosed
 	}
 
+	if body.err != nil {
+		return 0, body.err
+	}
+
+	common := body.common
+	common.mu.Lock()
+	defer common.mu.Unlock()
+
+	offset := body.offset
+	length := common.length
+	if offset > length {
+		offset = length
+	}
+
+	avail := (length - offset)
 	x := int64(len(p))
 	eof := false
-	avail := body.common.length - body.offset
 	if x > avail {
 		x = avail
 		eof = true
 	}
 
-	n, err := body.common.readAt(p[0:x], body.offset)
-	body.offset += int64(n)
+	var (
+		n   int
+		err error
+	)
+	if avail > 0 {
+		n, err = common.readAt(p[0:x], offset)
+	}
 	if eof && err == nil {
 		err = io.EOF
 	}
+
+	offset += int64(n)
+	body.offset = offset
+
+	if err != nil {
+		body.err = err
+
+		length = offset
+		if length < common.length {
+			common.length = length
+		}
+	}
+
 	return n, err
 }
 
@@ -98,11 +148,12 @@ func (body *seekerBody) Close() error {
 		return fs.ErrClosed
 	}
 
-	err := body.common.unref()
+	common := body.common
 	body.common = nil
+	body.err = nil
 	body.offset = 0
 	body.closed = true
-	return err
+	return common.unref()
 }
 
 func (body *seekerBody) Seek(offset int64, whence int) (int64, error) {
@@ -110,35 +161,34 @@ func (body *seekerBody) Seek(offset int64, whence int) (int64, error) {
 	defer body.mu.Unlock()
 
 	if body.closed {
-		return 0, fs.ErrClosed
+		return -1, fs.ErrClosed
 	}
 
-	bodyLen := body.common.length
+	common := body.common
+	length := common.Length()
 
 	switch whence {
 	case io.SeekStart:
 		if offset < 0 {
-			return 0, fmt.Errorf("Seek error: whence is SeekStart but offset %d is negative", offset)
+			return -1, NegativeStartOffsetSeekError{offset}
 		}
-
 	case io.SeekCurrent:
 		offset += body.offset
-
 	case io.SeekEnd:
-		offset += bodyLen
-
+		offset += length
 	default:
-		return 0, fmt.Errorf("Seek error: unknown whence value %d", whence)
+		return -1, UnknownWhenceSeekError{whence}
 	}
 
 	if offset < 0 {
-		return 0, fmt.Errorf("Seek error: computed offset %d is negative", offset)
+		return -1, NegativeComputedOffsetSeekError{offset}
 	}
 
-	if offset > bodyLen {
-		offset = bodyLen
+	if offset > length {
+		offset = length
 	}
 
+	body.err = nil
 	body.offset = offset
 	return offset, nil
 }
@@ -155,24 +205,34 @@ func (body *seekerBody) ReadAt(p []byte, offset int64) (int, error) {
 		return 0, fmt.Errorf("ReadAt error: offset %d is negative", offset)
 	}
 
-	bodyLen := body.common.length
+	common := body.common
+	common.mu.Lock()
+	defer common.mu.Unlock()
 
-	if offset > bodyLen {
-		offset = bodyLen
+	length := common.length
+	if offset > length {
+		offset = length
 	}
 
+	avail := (length - offset)
 	x := int64(len(p))
 	eof := false
-	avail := bodyLen - offset
 	if x > avail {
 		x = avail
 		eof = true
 	}
 
-	n, err := body.common.readAt(p[0:x], offset)
+	var (
+		n   int
+		err error
+	)
+	if avail > 0 {
+		n, err = common.readAt(p[0:x], offset)
+	}
 	if eof && err == nil {
 		err = io.EOF
 	}
+
 	return n, err
 }
 
@@ -186,6 +246,7 @@ func (body *seekerBody) Copy() (Body, error) {
 
 	dupe := &seekerBody{
 		common: body.common,
+		err:    body.err,
 		offset: body.offset,
 		closed: body.closed,
 	}
@@ -194,14 +255,16 @@ func (body *seekerBody) Copy() (Body, error) {
 }
 
 func (body *seekerBody) Unwrap() io.Reader {
+	var r io.Reader
 	body.mu.Lock()
-	defer body.mu.Unlock()
-
-	if body.closed {
-		return nil
+	if !body.closed {
+		common := body.common
+		common.mu.Lock()
+		r = common.s
+		common.mu.Unlock()
 	}
-
-	return body.common.s
+	body.mu.Unlock()
+	return r
 }
 
 var (

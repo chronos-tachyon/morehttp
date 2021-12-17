@@ -1,2 +1,10 @@
 github.com/chronos-tachyon/assert v1.2.0 h1:/otmE4+VRwr1G+vkFMyBOH4JVgkgTAfbOJFa6PXGj8M=
 github.com/chronos-tachyon/assert v1.2.0/go.mod h1:dYdZxEBttPxK1l1Ytxnx8tnwfHHflGHqFA12rjOQwdY=
+github.com/chronos-tachyon/bufferpool v1.0.0 h1:359ppGJIkAa9W/7Mik8QQmswQzvUIKNeOCM/K8bnmmo=
+github.com/chronos-tachyon/bufferpool v1.0.0/go.mod h1:s+UL6N0WPMKe8Nfy3OhezwJ9obO/lmQ45IbvnjtdW0s=
+github.com/chronos-tachyon/enumhelper v1.2.0 h1:5sZgOE2Ts4MqT69couk4vQo8M+/0tUL+HZlXS3xJgxs=
+github.com/chronos-tachyon/enumhelper v1.2.0/go.mod h1:tTwJ4uC8pTu6sqsALnstEH5KIwWR0pkYwhwhoWgDpLk=
+github.com/hashicorp/errwrap v1.0.0 h1:hLrqtEDnRye3+sgx6z4qVLNuviH3MR5aQ0ykNJa/UYA=
+github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
+github.com/hashicorp/go-multierror v1.1.1 h1:H5DkEtf6CXdFp0N0Em5UCwQpXMWke8IA0+lD48awMYo=
+github.com/hashicorp/go-multierror v1.1.1/go.mod h1:iw975J/qwKPdAO1clOe2L8331t/9/fmwbPZ6JB6eMoM=

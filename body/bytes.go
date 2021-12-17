@@ -78,7 +78,7 @@ func (body *bytesBody) Seek(offset int64, whence int) (int64, error) {
 	defer body.mu.Unlock()
 
 	if body.closed {
-		return 0, fs.ErrClosed
+		return -1, fs.ErrClosed
 	}
 
 	bodyLen := int64(len(body.data))
@@ -86,21 +86,18 @@ func (body *bytesBody) Seek(offset int64, whence int) (int64, error) {
 	switch whence {
 	case io.SeekStart:
 		if offset < 0 {
-			return 0, fmt.Errorf("Seek error: whence is SeekStart but offset %d is negative", offset)
+			return -1, NegativeStartOffsetSeekError{offset}
 		}
-
 	case io.SeekCurrent:
 		offset += int64(body.offset)
-
 	case io.SeekEnd:
 		offset += bodyLen
-
 	default:
-		return 0, fmt.Errorf("Seek error: unknown whence value %d", whence)
+		return -1, UnknownWhenceSeekError{whence}
 	}
 
 	if offset < 0 {
-		return 0, fmt.Errorf("Seek error: computed offset %d is negative", offset)
+		return -1, NegativeComputedOffsetSeekError{offset}
 	}
 
 	if offset > bodyLen {
