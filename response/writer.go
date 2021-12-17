@@ -137,6 +137,10 @@ func (w *fancyWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 func (w *fancyWriter) ReadFrom(r io.Reader) (int64, error) {
 	w.MaybeWriteHeader(http.StatusOK)
 
+	if w.isHEAD || w.status == http.StatusNoContent {
+		return io.Copy(io.Discard, r)
+	}
+
 	n, err := w.next.(io.ReaderFrom).ReadFrom(r)
 	assert.Assertf(n >= 0, "%d >= 0", n)
 	w.bytes += n
