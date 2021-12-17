@@ -7,12 +7,20 @@ import (
 )
 
 func copyStrings(src []string) []string {
+	if len(src) == 0 {
+		return nil
+	}
+
 	dst := make([]string, len(src))
 	copy(dst, src)
 	return dst
 }
 
 func copyHeaders(src http.Header) http.Header {
+	if len(src) == 0 {
+		return nil
+	}
+
 	srcLen := len(src)
 	if srcLen < 16 {
 		srcLen = 16
@@ -26,13 +34,9 @@ func copyHeaders(src http.Header) http.Header {
 }
 
 func copyBody(src body.Body) (body.Body, error) {
-	var dst body.Body
-	if src != nil {
-		var err error
-		dst, err = src.Copy()
-		if err != nil {
-			return nil, err
-		}
+	if src == nil {
+		return nil, nil
 	}
-	return dst, nil
+
+	return src.Copy()
 }

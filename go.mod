@@ -6,6 +6,7 @@ require (
 	github.com/chronos-tachyon/assert v1.2.0
 	github.com/chronos-tachyon/bufferpool v1.0.0
 	github.com/chronos-tachyon/enumhelper v1.2.0
+	google.golang.org/protobuf v1.27.1
 )
 
 require (

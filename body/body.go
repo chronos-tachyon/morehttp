@@ -2,11 +2,16 @@
 package body
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
 
 	"github.com/chronos-tachyon/assert"
+	"github.com/chronos-tachyon/bufferpool"
+	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/proto"
 )
 
 // Body represents a source of bytes, extending the io.ReadCloser interface.
@@ -141,6 +146,112 @@ func FromString(data string) Body {
 	}
 	raw := []byte(data)
 	return &bytesBody{data: raw}
+}
+
+// FromJSON returns a new Body which serves a JSON payload.
+//
+// Current and future implementations make these promises:
+//
+// - The returned Body implementation will provide io.ReaderAt, io.Seeker, and
+//   io.WriterTo.
+//
+func FromJSON(v interface{}) Body {
+	return fromJSONImpl(v, false)
+}
+
+// FromPrettyJSON returns a new Body which serves a JSON payload with indents and a terminal newline.
+//
+// Current and future implementations make these promises:
+//
+// - The returned Body implementation will provide io.ReaderAt, io.Seeker, and
+//   io.WriterTo.
+//
+func FromPrettyJSON(v interface{}) Body {
+	return fromJSONImpl(v, true)
+}
+
+func fromJSONImpl(v interface{}, isPretty bool) Body {
+	prefix := ""
+	indent := ""
+	if isPretty {
+		indent = "  "
+	}
+
+	buf := bufferpool.Get()
+	defer bufferpool.Put(buf)
+
+	e := json.NewEncoder(buf)
+	e.SetEscapeHTML(false)
+	e.SetIndent(prefix, indent)
+
+	err := e.Encode(v)
+	if err != nil {
+		panic(err)
+	}
+
+	src := buf.Bytes()
+	var dst []byte
+	if isPretty {
+		numLF := bytes.Count(src, []byte{'\n'})
+		dst = make([]byte, 0, len(src)+numLF)
+		for _, ch := range src {
+			if ch == '\n' {
+				dst = append(dst, '\r', '\n')
+			} else {
+				dst = append(dst, ch)
+			}
+		}
+	} else {
+		copy(dst, src)
+	}
+
+	return FromBytes(dst)
+}
+
+// FromProto returns a new Body which serves a binary protobuf payload.
+//
+// Current and future implementations make these promises:
+//
+// - The returned Body implementation will provide io.ReaderAt, io.Seeker, and
+//   io.WriterTo.
+//
+func FromProto(msg proto.Message) Body {
+	assert.NotNil(&msg)
+
+	raw, err := proto.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+
+	return FromBytes(raw)
+}
+
+// FromProtoText returns a new Body which serves a text protobuf payload.
+//
+// The MarshalOptions argument MAY be nil, in which case sensible defaults are
+// used.
+//
+// Current and future implementations make these promises:
+//
+// - The returned Body implementation will provide io.ReaderAt, io.Seeker, and
+//   io.WriterTo.
+//
+func FromProtoText(msg proto.Message, o *prototext.MarshalOptions) Body {
+	assert.NotNil(&msg)
+
+	if o == nil {
+		o = &prototext.MarshalOptions{
+			Multiline: true,
+			Indent:    "  ",
+		}
+	}
+
+	raw, err := o.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+
+	return FromBytes(raw)
 }
 
 // FromReader returns a new Body which serves bytes from a Reader.

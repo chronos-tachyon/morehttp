@@ -8,6 +8,7 @@ import (
 	"github.com/chronos-tachyon/morehttp/body"
 )
 
+// Response represents an HTTP response.
 type Response struct {
 	code int
 	hdrs http.Header
@@ -15,11 +16,11 @@ type Response struct {
 	err  error
 }
 
-// StatusCode returns the HTTP status code of the response.
+// Status returns the HTTP status code of the response.
 //
 // The returned value lies between 200 and 999 inclusive.
 //
-func (resp *Response) StatusCode() int {
+func (resp *Response) Status() int {
 	return resp.code
 }
 
@@ -53,17 +54,37 @@ func (resp *Response) String() string {
 	return fmt.Sprintf("[HTTP %03d - unknown length]", resp.code)
 }
 
-// Serve serves the response via the given ResponseWriter.
-func (resp *Response) Serve(w http.ResponseWriter) (int64, error) {
+// Copy returns a copy of this Response.
+func (resp *Response) Copy() (*Response, error) {
+	body2, err := copyBody(resp.body)
+	if err != nil {
+		return nil, err
+	}
+
+	out := &Response{
+		code: resp.code,
+		hdrs: resp.hdrs,
+		body: body2,
+		err:  resp.err,
+	}
+	return out, nil
+}
+
+// Serve serves the Response via the given ResponseWriter, consuming its Body.
+func (resp *Response) Serve(w http.ResponseWriter) error {
 	h := w.Header()
 	for k, vlist := range resp.hdrs {
 		h[k] = vlist
 	}
+
 	w.WriteHeader(resp.code)
-	n, err := io.Copy(w, resp.body)
+
+	_, err := io.Copy(w, resp.body)
+
 	err2 := resp.body.Close()
 	if err == nil {
 		err = err2
 	}
-	return n, err
+
+	return err
 }

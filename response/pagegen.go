@@ -1,7 +1,6 @@
 package response
 
 import (
-	"fmt"
 	"html"
 	"net/http"
 	"strconv"
@@ -17,9 +16,10 @@ type PageGenerator interface {
 type defaultPageGenerator struct{}
 
 func (gen *defaultPageGenerator) GenerateRedirectPage(code int, location string) (http.Header, body.Body) {
+	escapedLocation := html.EscapeString(location)
+
 	const CRLF = "\r\n"
-	text := `<!DOCTYPE html>` + CRLF + `<p>Redirecting to <a href="%s">%s</a>...</p>` + CRLF
-	text = fmt.Sprintf(text, html.EscapeString(location), html.EscapeString(location))
+	text := `<!DOCTYPE html>` + CRLF + `<p>Redirecting to <a href="` + escapedLocation + `">` + escapedLocation + `</a>...</p>` + CRLF
 	raw := []byte(text)
 
 	headers := make(http.Header, 16)
@@ -32,8 +32,9 @@ func (gen *defaultPageGenerator) GenerateRedirectPage(code int, location string)
 }
 
 func (gen *defaultPageGenerator) GenerateErrorPage(code int, err error) (http.Header, body.Body) {
+	statusCode := strconv.Itoa(code)
 	statusText := http.StatusText(code)
-	statusLine := statusText + "\r\n"
+	statusLine := statusCode + " " + statusText + "\r\n"
 	raw := []byte(statusLine)
 
 	headers := make(http.Header, 16)
@@ -44,4 +45,4 @@ func (gen *defaultPageGenerator) GenerateErrorPage(code int, err error) (http.He
 	return headers, body.FromBytes(raw)
 }
 
-var genSingleton PageGenerator = (*defaultPageGenerator)(nil)
+var DefaultPageGenerator PageGenerator = &defaultPageGenerator{}
