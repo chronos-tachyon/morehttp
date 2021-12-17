@@ -1,12 +1,15 @@
 package response
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/chronos-tachyon/morehttp/body"
 )
+
+var headerPush = http.CanonicalHeaderKey("Push")
 
 // Response represents an HTTP response.
 type Response struct {
@@ -72,9 +75,21 @@ func (resp *Response) Copy() (*Response, error) {
 
 // Serve serves the Response via the given ResponseWriter, consuming its Body.
 func (resp *Response) Serve(w http.ResponseWriter) error {
+	if x, ok := w.(http.Pusher); ok {
+		vlist := resp.hdrs[headerPush]
+		for _, url := range vlist {
+			err := x.Push(url, &http.PushOptions{})
+			if err != nil && !errors.Is(err, http.ErrNotSupported) {
+				return err
+			}
+		}
+	}
+
 	h := w.Header()
 	for k, vlist := range resp.hdrs {
-		h[k] = vlist
+		if k != headerPush {
+			h[k] = vlist
+		}
 	}
 
 	w.WriteHeader(resp.code)
