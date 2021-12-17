@@ -37,11 +37,11 @@ func NewWriter(w http.ResponseWriter, r *http.Request) Writer {
 }
 
 type basicWriter struct {
-	next        http.ResponseWriter
-	bytes       int64
-	status      int
-	isHEAD      bool
-	sawError    bool
+	next     http.ResponseWriter
+	bytes    int64
+	status   int
+	isHEAD   bool
+	sawError bool
 }
 
 func (w *basicWriter) Header() http.Header {

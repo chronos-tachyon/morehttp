@@ -1,0 +1,35 @@
+---
+linters:
+  enable:
+    - deadcode
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
+    - exportloopref
+    - goconst
+    - gocyclo
+    - godot
+    - gofmt
+    - goimports
+    - misspell
+
+linters-settings:
+  gocyclo:
+    min-complexity: 35
+  staticcheck:
+    go: "1.17"
+  unused:
+    go: "1.17"
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - linters:
+      - staticcheck
+      text: "SA1019: http.CloseNotifier"

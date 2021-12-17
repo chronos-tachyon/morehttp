@@ -26,8 +26,8 @@ func (w Wrapper110) Stat() (fs.FileInfo, error) {
 }
 
 var (
-	_ fs.File     = Wrapper110{}
-	_ io.Reader   = Wrapper110{}
-	_ io.Seeker   = Wrapper110{}
-	_ io.Closer   = Wrapper110{}
+	_ fs.File   = Wrapper110{}
+	_ io.Reader = Wrapper110{}
+	_ io.Seeker = Wrapper110{}
+	_ io.Closer = Wrapper110{}
 )
