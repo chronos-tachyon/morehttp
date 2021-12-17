@@ -25,6 +25,10 @@ func NewWriter(w http.ResponseWriter, r *http.Request) Writer {
 
 	isHEAD := (r.Method == http.MethodHead)
 
+	if x, ok := w.(Writer); ok {
+		return x
+	}
+
 	if _, ok := w.(fancy); ok {
 		return &fancyWriter{basicWriter{next: w, isHEAD: isHEAD}}
 	}
