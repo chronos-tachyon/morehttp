@@ -281,13 +281,25 @@ func FromReader(r io.Reader) (Body, error) {
 		return b, nil
 	}
 
+	return FromReaderAndLength(r, -1)
+}
+
+// FromReaderAndLength returns a new Body which serves bytes from a Reader.
+//
+// See FromReader for details.
+//
+func FromReaderAndLength(r io.Reader, length int64) (Body, error) {
+	assert.NotNil(&r)
+
+	if length < 0 {
+		length = -1
+	}
+
 	f, fOK := r.(fs.File)
 	s, sOK := r.(io.ReadSeeker)
 	at, atOK := r.(io.ReaderAt)
 
-	var length int64 = -1
-
-	if fOK {
+	if fOK && length < 0 {
 		fi, err := f.Stat()
 		if err != nil {
 			return nil, fmt.Errorf("failed to determine length of body via Stat: %w", err)
