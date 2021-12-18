@@ -110,7 +110,7 @@ type bufferedBody struct {
 	closed bool
 }
 
-func (body *bufferedBody) Length() int64 {
+func (body *bufferedBody) BytesRemaining() int64 {
 	body.mu.Lock()
 	defer body.mu.Unlock()
 

@@ -46,7 +46,7 @@ func (common *readerAtCommon) unref() error {
 	return err
 }
 
-func (common *readerAtCommon) Length() int64 {
+func (common *readerAtCommon) BytesRemaining() int64 {
 	common.mu.Lock()
 	length := common.length
 	common.mu.Unlock()
@@ -69,7 +69,7 @@ type readerAtBody struct {
 	closed bool
 }
 
-func (body *readerAtBody) Length() int64 {
+func (body *readerAtBody) BytesRemaining() int64 {
 	body.mu.Lock()
 	defer body.mu.Unlock()
 
@@ -77,7 +77,7 @@ func (body *readerAtBody) Length() int64 {
 		return 0
 	}
 
-	length := body.common.Length()
+	length := body.common.BytesRemaining()
 	offset := body.offset
 	if offset >= length {
 		return 0
@@ -165,7 +165,7 @@ func (body *readerAtBody) Seek(offset int64, whence int) (int64, error) {
 	}
 
 	common := body.common
-	length := common.Length()
+	length := common.BytesRemaining()
 
 	switch whence {
 	case io.SeekStart:

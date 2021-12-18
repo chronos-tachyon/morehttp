@@ -12,7 +12,7 @@ type emptyBody struct {
 	closed bool
 }
 
-func (body *emptyBody) Length() int64 {
+func (body *emptyBody) BytesRemaining() int64 {
 	return 0
 }
 

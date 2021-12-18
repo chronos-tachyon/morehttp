@@ -51,7 +51,7 @@ func (resp *Response) Err() error {
 
 // String returns a programmer-friendly string description.
 func (resp *Response) String() string {
-	if bodyLen := resp.body.Length(); bodyLen >= 0 {
+	if bodyLen := resp.body.BytesRemaining(); bodyLen >= 0 {
 		return fmt.Sprintf("[HTTP %03d - %d bytes]", resp.code, bodyLen)
 	}
 	return fmt.Sprintf("[HTTP %03d - unknown length]", resp.code)

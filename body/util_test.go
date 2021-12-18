@@ -21,11 +21,11 @@ type TestOptions struct {
 	ShortBody              Body
 	ShortBodyUnknownLength bool
 
-	NumLengthCalls uint
-	NumReadCalls   uint
-	NumReadAtCalls uint
-	NumSeekCalls   uint
-	NumCloseCalls  uint
+	NumBytesRemainingCalls uint
+	NumReadCalls           uint
+	NumReadAtCalls         uint
+	NumSeekCalls           uint
+	NumCloseCalls          uint
 }
 
 func RunBodyTests(t *testing.T, o *TestOptions) {
@@ -83,12 +83,12 @@ func runEmptyBodyReadTests(t *testing.T, o *TestOptions) {
 
 	o.EmptyMock.Mark("Read-Begin")
 
-	// Test Length.
+	// Test BytesRemaining.
 
-	o.NumLengthCalls++
-	n64 = o.EmptyBody.Length()
+	o.NumBytesRemainingCalls++
+	n64 = o.EmptyBody.BytesRemaining()
 	if expect := int64(0); n64 != expect {
-		t.Errorf("Length #%d failed: expected %d, got %d", o.NumLengthCalls, expect, n64)
+		t.Errorf("BytesRemaining #%d failed: expected %d, got %d", o.NumBytesRemainingCalls, expect, n64)
 	}
 
 	// Test zero-byte Read just before EOF.
@@ -122,12 +122,12 @@ func runEmptyBodyReadTests(t *testing.T, o *TestOptions) {
 		t.Errorf("Read #%d failed: expected io.EOF, got %s", o.NumReadCalls, formatAny(err))
 	}
 
-	// Test Length after EOF.
+	// Test BytesRemaining after EOF.
 
-	o.NumLengthCalls++
-	n64 = o.EmptyBody.Length()
+	o.NumBytesRemainingCalls++
+	n64 = o.EmptyBody.BytesRemaining()
 	if expect := int64(0); expect != n64 {
-		t.Errorf("Length #%d failed: expected %d, got %d", o.NumReadCalls, expect, n64)
+		t.Errorf("BytesRemaining #%d failed: expected %d, got %d", o.NumReadCalls, expect, n64)
 	}
 
 	// Test zero-byte Read after EOF.
@@ -341,16 +341,16 @@ func runShortBodyReadTests(t *testing.T, o *TestOptions) {
 
 	o.ShortMock.Mark("Read-Begin")
 
-	// Test Length at start of file.
+	// Test BytesRemaining at start of file.
 
-	o.NumLengthCalls++
-	n64 = o.ShortBody.Length()
+	o.NumBytesRemainingCalls++
+	n64 = o.ShortBody.BytesRemaining()
 	expectLength := int64(4)
 	if o.ShortBodyUnknownLength {
 		expectLength = -1
 	}
 	if expect := expectLength; n64 != expect {
-		t.Errorf("Length #%d failed: expected %d, got %d", o.NumLengthCalls, expect, n64)
+		t.Errorf("BytesRemaining #%d failed: expected %d, got %d", o.NumBytesRemainingCalls, expect, n64)
 	}
 
 	// Test zero-byte Read at start of file.
@@ -419,12 +419,12 @@ func runShortBodyReadTests(t *testing.T, o *TestOptions) {
 		t.Errorf("Read #%d failed: expected %q, got %q", o.NumReadCalls, expect, actual)
 	}
 
-	// Test Length just before EOF.
+	// Test BytesRemaining just before EOF.
 
-	o.NumLengthCalls++
-	n64 = o.ShortBody.Length()
+	o.NumBytesRemainingCalls++
+	n64 = o.ShortBody.BytesRemaining()
 	if expect := int64(0); n64 != expect {
-		t.Errorf("Length #%d failed: expected %d, got %d", o.NumLengthCalls, expect, n64)
+		t.Errorf("BytesRemaining #%d failed: expected %d, got %d", o.NumBytesRemainingCalls, expect, n64)
 	}
 
 	// Test zero-byte Read just before EOF.
@@ -458,12 +458,12 @@ func runShortBodyReadTests(t *testing.T, o *TestOptions) {
 		t.Errorf("Read #%d failed: expected io.EOF, got %s", o.NumReadCalls, formatAny(err))
 	}
 
-	// Test Length after EOF.
+	// Test BytesRemaining after EOF.
 
-	o.NumLengthCalls++
-	n64 = o.ShortBody.Length()
+	o.NumBytesRemainingCalls++
+	n64 = o.ShortBody.BytesRemaining()
 	if expect := int64(0); expect != n64 {
-		t.Errorf("Length #%d failed: expected %d, got %d", o.NumReadCalls, expect, n64)
+		t.Errorf("BytesRemaining #%d failed: expected %d, got %d", o.NumReadCalls, expect, n64)
 	}
 
 	// Test zero-byte Read after EOF.
@@ -732,12 +732,12 @@ func runBodyAfterCloseTests(t *testing.T, m *mockreader.MockReader, b Body, o *T
 
 	m.Mark("AfterClose-Begin")
 
-	// Test Length after close.
+	// Test BytesRemaining after close.
 
-	o.NumLengthCalls++
-	n64 = b.Length()
+	o.NumBytesRemainingCalls++
+	n64 = b.BytesRemaining()
 	if expect := int64(0); n64 != expect {
-		t.Errorf("Length #%d failed: expected %d, got %d", o.NumLengthCalls, expect, n64)
+		t.Errorf("BytesRemaining #%d failed: expected %d, got %d", o.NumBytesRemainingCalls, expect, n64)
 	}
 
 	// Test that all other calls return fs.ErrClosed.

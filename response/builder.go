@@ -302,8 +302,8 @@ func (builder *Builder) Copy() (*Builder, error) {
 // header is automatically populated as "application/octet-stream".
 //
 // If the Content-Length header has not been specified AND the Body has a
-// non-negative Length(), then the Content-Length header is automatically
-// populated from Length().
+// non-negative BytesRemaining(), then the Content-Length header is
+// automatically populated from BytesRemaining().
 //
 // After calling this method, the Builder is reset to an empty state and is
 // ready to build another Response.  Only the PageGenerator is retained.
@@ -336,7 +336,7 @@ func (builder *Builder) Build() *Response {
 		hdrs[contentType] = v
 	}
 
-	bodyLen := body.Length()
+	bodyLen := body.BytesRemaining()
 	if bodyLen >= 0 {
 		contentLength := http.CanonicalHeaderKey("Content-Length")
 		if _, found := hdrs[contentLength]; !found {

@@ -19,7 +19,7 @@ import (
 // before sending them.
 //
 // Unlike an io.ReadCloser, the length of a Body can be retrieved cheaply using
-// the Length() method, assuming that it is actually known.
+// the BytesRemaining() method, assuming that it is actually known.
 //
 // Also unlike an io.ReadCloser, a Body can be duplicated using the Copy()
 // method.  This returns a second instance of Body that represents the same
@@ -33,9 +33,9 @@ import (
 //
 type Body interface {
 
-	// Length returns the number of bytes remaining in the Body, or -1 if
-	// the number of bytes remaining is unknown.
-	Length() int64
+	// BytesRemaining returns the exact number of bytes remaining in the
+	// Body, or -1 if the number of bytes remaining is unknown.
+	BytesRemaining() int64
 
 	// Read operates as per the usual io.Reader contract, filling p with as
 	// many bytes as it can and then returning the number of bytes filled.

@@ -9,7 +9,7 @@ var closedSingleton Body = (*closedBody)(nil)
 
 type closedBody struct{}
 
-func (body *closedBody) Length() int64 {
+func (body *closedBody) BytesRemaining() int64 {
 	return 0
 }
 

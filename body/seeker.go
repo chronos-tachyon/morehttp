@@ -45,7 +45,7 @@ func (common *seekerCommon) unref() error {
 	return err
 }
 
-func (common *seekerCommon) Length() int64 {
+func (common *seekerCommon) BytesRemaining() int64 {
 	common.mu.Lock()
 	defer common.mu.Unlock()
 
@@ -73,7 +73,7 @@ type seekerBody struct {
 	closed bool
 }
 
-func (body *seekerBody) Length() int64 {
+func (body *seekerBody) BytesRemaining() int64 {
 	body.mu.Lock()
 	defer body.mu.Unlock()
 
@@ -165,7 +165,7 @@ func (body *seekerBody) Seek(offset int64, whence int) (int64, error) {
 	}
 
 	common := body.common
-	length := common.Length()
+	length := common.BytesRemaining()
 
 	switch whence {
 	case io.SeekStart:

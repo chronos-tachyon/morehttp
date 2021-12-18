@@ -17,7 +17,7 @@ type bytesBody struct {
 	closed bool
 }
 
-func (body *bytesBody) Length() int64 {
+func (body *bytesBody) BytesRemaining() int64 {
 	body.mu.Lock()
 	defer body.mu.Unlock()
 
